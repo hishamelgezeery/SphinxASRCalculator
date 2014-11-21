@@ -77,6 +77,7 @@
     <!-- Sphinx-4 (non-JSAPI) demos -->
     <target name="compile_sphinx_demos"
             depends="compile_sphinx_helloworld,
+    		 compile_sphinx_calculator,
 		     compile_sphinx_hellongram,
 		     compile_sphinx_lattice,
 		     compile_sphinx_classbased,
@@ -112,6 +113,30 @@
              includes="edu/cmu/sphinx/demo/helloworld/**"
              compress="true"/>
     </target>
+	
+	<target name="compile_sphinx_calculator">
+	        <mkdir dir="${demo_classes_dir}/edu/cmu/sphinx/demo/calculator"/>
+	        <javac debug="true"
+	               listfiles="true"
+	               deprecation="true"
+	               includeAntRuntime="false"
+	               srcdir="${demo_src_dir}"
+	               destdir="${demo_classes_dir}"
+	               includes="edu/cmu/sphinx/demo/calculator/**">
+	            <classpath refid="libs"/>
+	        </javac>
+	        <copy file="${demo_src_dir}/edu/cmu/sphinx/demo/calculator/calculator.gram"
+	              todir="${demo_classes_dir}/edu/cmu/sphinx/demo/calculator"/>
+	        <copy file="${demo_src_dir}/edu/cmu/sphinx/demo/calculator/calculator.config.xml"
+	              todir="${demo_classes_dir}/edu/cmu/sphinx/demo/calculator"/>
+	        <mkdir dir="${bin_dir}"/>
+	        <jar destfile="${bin_dir}/Calculator.jar"
+	             manifest="${demo_src_dir}/edu/cmu/sphinx/demo/calculator/calculator.Manifest"
+	             basedir="${demo_classes_dir}"
+	             includes="edu/cmu/sphinx/demo/calculator/**"
+	             compress="true"/>
+	    </target>
+	
 
     <target name="compile_jsapi_dialog" if="jsapi_jar_present">
         <mkdir dir="${demo_classes_dir}/edu/cmu/sphinx/demo/jsapi/dialog"/>
