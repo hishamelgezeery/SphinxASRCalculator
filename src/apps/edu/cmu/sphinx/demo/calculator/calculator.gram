@@ -42,15 +42,15 @@ grammar calculator;
 
 <variable> = <letter> | pie | e;
 
-<defineVariable> = define variable <letter>;
+public <defineVariable> = define variable <letter>;
 
-<storeVariable> = <variable> equals <number>;
+public <storeVariable> = <variable> equals <number>;
 
-<getVariable> = get <variable>;
+public <getVariable> = get <variable>;
 
-<storeLastResult> = store last result;
+public <storeLastResult> = store last result;
 
-<getLastResult> = get last result;
+public <getLastResult> = get last result;
 
 <operand> = (<number> | <variable>) [power <number>];
 
