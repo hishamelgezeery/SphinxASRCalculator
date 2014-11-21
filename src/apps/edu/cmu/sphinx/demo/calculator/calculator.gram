@@ -1,9 +1,70 @@
 #JSGF V1.0;
 
 /**
- * JSGF Grammar for Hello World example
+ * JSGF Grammar for the Calculator program.
  */
 
 grammar calculator;
 
-public <greet> = (Good morning | Hello) ( Bhiksha | Evandro | Paul | Philip | Rita | Will );
+// 0 -> 9
+<unit>  = ( oh | zero | one | two | three | four | five | six | seven | eight | nine);
+
+// 11 -> 9
+<unitTens> = (eleven | twelve | thirteen | fourteen | fifteen | sixteen | seventeen |
+           eighteen | nineteen);
+
+// 10 - 20 - 30 --> 90
+<ten> = (ten | twenty | thirty | forty | fifty | sixty | seventy | eighty | ninety); #
+
+// ten + unit eg. twenty three
+<tenUnit> = <ten> <unit>;
+
+// a number from 0 --> 99
+<smallNum> = <unit> | <unitTens> | <ten> | <tenUnit>;
+
+// numbers involving "hundred", could be three hundred or thirty four hundred = 3400
+<hundred> = <smallNum> hundred;
+
+// all combinations producing a number in the thousands - range now up to 99,999
+<thousand> = <smallNum> thousand;
+
+<bigNum> = <hundred> | <thousand>;
+
+<number> = <unit>+ |
+		   <smallNum> |
+		   <smallNum> <smallNum> |
+		   <bigNum> |
+		   <bigNum> [and] <smallNum> |
+		   <bigNum> <bigNum> |
+		   <bigNum> <bigNum> [and] <smallNum>;
+
+<letter> = a|b|c|d|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z;
+
+<variable> = <letter> | pie | e;
+
+<defineVariable> = define variable <letter>;
+
+<storeVariable> = <variable> equals <number>;
+
+<getVariable> = get <variable>;
+
+<storeLastResult> = store last result;
+
+<getLastResult> = get last result;
+
+<operand> = (<number> | <variable>) [power <number>];
+
+<operator> = (plus | minus | over | times| power);
+
+<logOperator> = log;
+
+public <operation>  = <operand> <operator> <operand> [<operator> <operand>];
+
+public <logOperation>  = log <operand> [<operator> <operand>];		   
+		   
+		   
+		   
+		   
+		   
+		   
+		   
