@@ -12,6 +12,7 @@
 
 package edu.cmu.sphinx.demo.calculator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import edu.cmu.sphinx.frontend.util.Microphone;
@@ -25,17 +26,17 @@ import edu.cmu.sphinx.util.props.ConfigurationManager;
  * segments incoming audio into utterances and silences.
  */
 public class Calculator {
-	
+
 	private Recognizer recognizer;
-    private Microphone microphone;
-    private HashMap<String, Double> translations;
-    private HashMap<String, Double> variables;
+	private Microphone microphone;
+	private HashMap<String, Double> translations;
+	private HashMap<String, Double> variables;
 	private String status;
 	private double lastResult;
 	private double result;
-	
+
 	public Calculator() {
-		//setting up Speech Recognition
+		// setting up Speech Recognition
 		ConfigurationManager cm = new ConfigurationManager(
 				Calculator.class.getResource("calculator.config.xml"));
 		recognizer = (Recognizer) cm.lookup("recognizer");
@@ -46,14 +47,14 @@ public class Calculator {
 			status = "Couldn't start microphone!";
 			recognizer.deallocate();
 		}
-		
-		//Initializing variables
+
+		// Initializing variables
 		initializeTranslations();
 		variables = new HashMap<String, Double>();
-        variables.put("pie", Math.PI);
-        variables.put("e", Math.E);
+		variables.put("pie", Math.PI);
+		variables.put("e", Math.E);
 	}
-	
+
 	private void initializeTranslations() {
 		translations = new HashMap<String, Double>();
 		translations.put("one", 1.0);
@@ -67,7 +68,7 @@ public class Calculator {
 		translations.put("nine", 9.0);
 		translations.put("zero", 0.0);
 		translations.put("oh", 0.0);
-		///////////////
+		// /////////////
 		translations.put("eleven", 11.0);
 		translations.put("twelve", 12.0);
 		translations.put("thirteen", 13.0);
@@ -77,7 +78,7 @@ public class Calculator {
 		translations.put("seventeen", 17.0);
 		translations.put("eighteen", 18.0);
 		translations.put("nineteen", 19.0);
-		//////////////////
+		// ////////////////
 		translations.put("ten", 10.0);
 		translations.put("twenty", 20.0);
 		translations.put("thirty", 30.0);
@@ -88,50 +89,204 @@ public class Calculator {
 		translations.put("eighty", 80.0);
 		translations.put("ninety", 90.0);
 	}
-	
-	public void parse(String operationSentence){
-		String [] sentenceWords = operationSentence.split(" ");
-		
-		//case of defining variable
-		if(sentenceWords[0].equalsIgnoreCase("define")){
+
+	public void parse(String operationSentence) {
+		String[] sentenceWords = operationSentence.split(" ");
+
+		// case of defining variable
+		if (sentenceWords[0].equalsIgnoreCase("define")) {
 			defineVariable(operationSentence);
 			return;
 		}
-		//case of storing value in variable
-		if(sentenceWords[1].equalsIgnoreCase("equals")){
+		// case of storing value in variable
+		if (sentenceWords[1].equalsIgnoreCase("equals")) {
 			storeInVariable(operationSentence);
 			return;
 		}
-		//case of retrieving variable
-		if(sentenceWords[0].equalsIgnoreCase("get")){
-			if(sentenceWords[1].equals("last"))
+		// case of retrieving variable
+		if (sentenceWords[0].equalsIgnoreCase("get")) {
+			if (sentenceWords[1].equals("last"))
 				result = lastResult;
 			else
 				result = variables.get(sentenceWords[1]);
 			return;
 		}
-		//storing last result
-		if(sentenceWords[0].equalsIgnoreCase("store")){
+		// storing last result
+		if (sentenceWords[0].equalsIgnoreCase("store")) {
 			lastResult = result;
 			return;
 		}
-		
-		
-		
+		// execute log operation
+		if (sentenceWords[0].equalsIgnoreCase("log")) {
+			performLogOperation(sentenceWords);
+		}
+		// otherwise split the operation into operands and operators
+		// and solve
+		String[] operandsArray = operationSentence
+				.split("(plus)|(minus)|(over)|(times)");
+		ArrayList<String> operations = new ArrayList<String>();
+		for (int i = 0; i < sentenceWords.length; i++) {
+			if (sentenceWords[i].equals("plus")
+					|| sentenceWords[i].equals("minus")
+					|| sentenceWords[i].equals("over")
+					|| sentenceWords[i].equals("times"))
+				operations.add(sentenceWords[i]);
+		}
+		translateOperands(operandsArray);
+
 	}
-	
+
+	private void translateOperands(String[] operandsArray) {
+		double[] translatedOperands = new double[operandsArray.length];
+		for (int i = 0; i < operandsArray.length; i++) {
+			translatedOperands[i] = translateOperandsHelper(operandsArray[i]);
+		}
+
+	}
+
+	private double translateOperandsHelper(String string) {
+		String[] stringElements = string.split(" ");
+		if (string.contains("power")) {
+
+		}
+		return 0;
+	}
+
+	public boolean isDoubleParsable(String string) {
+		double x = -1;
+		try {
+			x = Double.parseDouble(string);
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
+	}
+
+	private double translateNumber(String[] numberElements) {
+		ArrayList<String> translatedValues = new ArrayList<String>();
+		//putting available translations instead of words from translations Hashmap
+		for (int i = 0; i < numberElements.length; i++) {
+			if (translations.containsKey(numberElements[i])) {
+				double value = translations.get(numberElements[i]);
+				translatedValues.add(""+value);
+			}
+			else{
+				translatedValues.add(numberElements[i]);
+			}
+		}
+		translatedValues.remove("and");
+		//grouping two digit numbers
+		for (int i = 0; i < translatedValues.size() - 1; i++) {
+			if (isDoubleParsable(translatedValues.get(i))
+					&& Double.parseDouble(translatedValues.get(i)) >= 20
+					&& isDoubleParsable(translatedValues.get(i+1))
+					&& Double.parseDouble(translatedValues.get(i+1)) < 10) {
+				translatedValues.set(i,""+ (Double.parseDouble(translatedValues.get(i))
+						+ Double.parseDouble(translatedValues.get(i+1))) );
+				translatedValues.remove(i+1);
+			}
+		}
+		//replacing thousand and hundred by 000 and 00 respectively
+		for (int i = 0; i < translatedValues.size(); i++) {
+			if(translatedValues.get(i).equalsIgnoreCase("thousand")){
+				translatedValues.set(i, "000");
+			}
+			else if(translatedValues.get(i).equalsIgnoreCase("hundred"))
+				translatedValues.set(i, "00");
+		}
+		//grouping thousands and hundreds together to be ready to add all elements
+		//in Arraylist
+		if(translatedValues.contains("000")){
+			int indexOfThousand = translatedValues.indexOf("000");
+			double temp = Double.parseDouble(translatedValues.get(indexOfThousand-1)) * 1000;
+			translatedValues.set(indexOfThousand, "" + temp);
+			translatedValues.remove(indexOfThousand-1);
+			
+		}
+		if(translatedValues.contains("00")){
+			int indexOfHundred = translatedValues.indexOf("00");
+			double temp = Double.parseDouble(translatedValues.get(indexOfHundred-1)) * 100;
+			translatedValues.set(indexOfHundred, "" + temp);
+			translatedValues.remove(indexOfHundred-1);
+			
+		}
+		System.out.println(translatedValues);
+		boolean allDigits = true;
+		for (int i = 0; i < translatedValues.size(); i++) {
+			if(Double.parseDouble(translatedValues.get(i))>9){
+				allDigits = false;
+				break;
+			}
+		}
+		boolean allTwoDigitNumbers = true;
+		double temp;
+		for (int i = 0; i < translatedValues.size(); i++) {
+			temp = Double.parseDouble(translatedValues.get(i));
+			if(temp<9 || temp>100){
+				allTwoDigitNumbers = false;
+				break;
+			}
+		}
+		double value = 0;
+		if(allDigits | allTwoDigitNumbers){
+			String number = "";
+			for (int i = 0; i < translatedValues.size(); i++) {
+				number+= ((int)(Double.parseDouble(translatedValues.get(i))));
+			}
+			value = Double.parseDouble(number);
+		}
+		else{
+			for (int i = 0; i < translatedValues.size(); i++) {
+				value+= Double.parseDouble(translatedValues.get(i));
+			}
+		}
+		
+		return value;
+	}
+
+	private static void printArray(String[] numberElements) {
+		System.out.print("[");
+		for (int i = 0; i < numberElements.length; i++) {
+			System.out.print(numberElements[i] + ", ");
+		}
+		System.out.println("]");
+
+	}
+
+	private void performLogOperation(String[] sentenceWords) {
+		// TODO Auto-generated method stub
+
+	}
+
 	private void storeInVariable(String operationSentence) {
-		String [] sentenceWords = operationSentence.split(" ");
+		String[] sentenceWords = operationSentence.split(" ");
 		variables.put(sentenceWords[0], Double.parseDouble(sentenceWords[2]));
 	}
 
 	private void defineVariable(String operationSentence) {
-		String [] sentenceWords = operationSentence.split(" ");
+		String[] sentenceWords = operationSentence.split(" ");
 		variables.put(sentenceWords[2], -1.0);
-		
+
+	}
+
+	public static int wordCount(String s) {
+		if (s == null)
+			return 0;
+		return s.trim().split("\\s+").length;
 	}
 
 	public static void main(String[] args) {
-
+		/* test block
+		 *Calculator c = new Calculator();
+		String[] temp = {"four","two","six", "three"};
+		String[] temp2 = {"eleven", "twenty", "three"};
+		String[] temp3 = {"eleven", "hundred"};
+		String[] temp4 = {"sixteen", "hundred","and", "sixty", "nine"};
+		String[] temp5 = {"ninety", "nine", "thousand", "sixteen", "hundred","and", "sixty", "nine"};
+		System.out.println(c.translateNumber(temp));
+		System.out.println(c.translateNumber(temp2));
+		System.out.println(c.translateNumber(temp3));
+		System.out.println(c.translateNumber(temp4));
+		System.out.println(c.translateNumber(temp5));*/
 	}
 }
