@@ -12,6 +12,9 @@
 
 package edu.cmu.sphinx.demo.calculator;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -31,10 +34,10 @@ public class Calculator {
 	private Microphone microphone;
 	private HashMap<String, Double> translations;
 	private HashMap<String, Double> variables;
-	private String status;
 	public boolean errorOccured = false;
 	public double lastResult;
 	public double result;
+	public String saidSentence = "";
 
 	public Calculator() {
 		// setting up Speech Recognition
@@ -45,7 +48,6 @@ public class Calculator {
 		// start the microphone or exit if the programm if this is not possible
 		microphone = (Microphone) cm.lookup("microphone");
 		if (!microphone.startRecording()) {
-			status = "Couldn't start microphone!";
 			recognizer.deallocate();
 		}
 
@@ -91,117 +93,141 @@ public class Calculator {
 		translations.put("ninety", 90.0);
 	}
 
-	public void parse(String operationSentence) {
-		try{
-		String[] sentenceWords = operationSentence.split(" ");
+	public void listen() {
 
-		// case of defining variable
-		if (sentenceWords[0].equalsIgnoreCase("define")) {
-			defineVariable(operationSentence);
-			return;
-		}
-		// case of storing value in variable
-		if (sentenceWords[1].equalsIgnoreCase("equals")) {
-			storeInVariable(operationSentence);
-			return;
-		}
-		// case of retrieving variable
-		if (sentenceWords[0].equalsIgnoreCase("get")) {
-			if (sentenceWords[1].equals("last"))
-				result = lastResult;
-			else
-				result = variables.get(sentenceWords[1]);
-			return;
-		}
-		// storing last result
-		if (sentenceWords[0].equalsIgnoreCase("store")) {
-			lastResult = result;
-			return;
-		}
-		// execute log operation
-		if (sentenceWords[0].equalsIgnoreCase("log")) {
-			performLogOperation(sentenceWords);
-			return;
-		}
-		// otherwise split the operation into operands and operators
-		// and solve
-		String[] operandsArray = operationSentence
-				.split("(plus)|(minus)|(over)|(times)");
-		ArrayList<String> operations = new ArrayList<String>();
-		for (int i = 0; i < sentenceWords.length; i++) {
-			if (sentenceWords[i].equals("plus")
-					|| sentenceWords[i].equals("minus")
-					|| sentenceWords[i].equals("over")
-					|| sentenceWords[i].equals("times"))
-				operations.add(sentenceWords[i]);
-		}
-		double[] translatedOperands = translateOperands(operandsArray);
-		if (translatedOperands.length == 2) {
-			switch (operations.get(0)) {
-			case "plus":
-				result = translatedOperands[0] + translatedOperands[1];
-				break;
-			case "minus":
-				result = translatedOperands[0] - translatedOperands[1];
-				break;
-			case "times":
-				result = translatedOperands[0] * translatedOperands[1];
-				break;
-			case "over":
-				result = translatedOperands[0] / translatedOperands[1];
-				break;
-			}
+		this.microphone.clear();
+		this.microphone.startRecording();
+
+		System.out.println("Please say something");
+		Result result = recognizer.recognize();
+
+		if (result != null) {
+			String resultText = result.getBestFinalResultNoFiller();
+			saidSentence = resultText;
+			this.parse(resultText);
 		} else {
-			// if 3 operands check if there is times or over and e
-			double tempValue = -1.0;
-			if (operations.get(0).equals("times")
-					|| operations.get(0).equals("over")) {
-				if (operations.get(0).equals("times"))
-					tempValue = translatedOperands[0] * translatedOperands[1];
-				if (operations.get(0).equals("over"))
-					tempValue = translatedOperands[0] / translatedOperands[1];
-				switch (operations.get(1)) {
+			errorOccured = true;
+			System.err.println("Error recording sentence.\n");
+		}
+
+	}
+
+	public void parse(String operationSentence) {
+		try {
+			String[] sentenceWords = operationSentence.split(" ");
+
+			// case of defining variable
+			if (sentenceWords[0].equalsIgnoreCase("define")) {
+				defineVariable(operationSentence);
+				return;
+			}
+			// case of storing value in variable
+			if (sentenceWords[1].equalsIgnoreCase("equals")) {
+				storeInVariable(operationSentence);
+				return;
+			}
+			// case of retrieving variable
+			if (sentenceWords[0].equalsIgnoreCase("get")) {
+				if (sentenceWords[1].equals("last"))
+					result = lastResult;
+				else
+					result = variables.get(sentenceWords[1]);
+				return;
+			}
+			// storing last result
+			if (sentenceWords[0].equalsIgnoreCase("store")) {
+				lastResult = result;
+				return;
+			}
+			// execute log operation
+			if (sentenceWords[0].equalsIgnoreCase("log")) {
+				performLogOperation(sentenceWords);
+				return;
+			}
+			// otherwise split the operation into operands and operators
+			// and solve
+			String[] operandsArray = operationSentence
+					.split("(plus)|(minus)|(over)|(times)");
+			ArrayList<String> operations = new ArrayList<String>();
+			for (int i = 0; i < sentenceWords.length; i++) {
+				if (sentenceWords[i].equals("plus")
+						|| sentenceWords[i].equals("minus")
+						|| sentenceWords[i].equals("over")
+						|| sentenceWords[i].equals("times"))
+					operations.add(sentenceWords[i]);
+			}
+			double[] translatedOperands = translateOperands(operandsArray);
+			if (translatedOperands.length == 2) {
+				switch (operations.get(0)) {
 				case "plus":
-					result = tempValue + translatedOperands[2];
+					result = translatedOperands[0] + translatedOperands[1];
 					break;
 				case "minus":
-					result = tempValue - translatedOperands[2];
+					result = translatedOperands[0] - translatedOperands[1];
 					break;
 				case "times":
-					result = tempValue * translatedOperands[2];
+					result = translatedOperands[0] * translatedOperands[1];
 					break;
 				case "over":
-					result = tempValue / translatedOperands[2];
+					result = translatedOperands[0] / translatedOperands[1];
 					break;
 				}
 			} else {
+				// if 3 operands check if there is times or over and e
+				double tempValue = -1.0;
+				if (operations.get(0).equals("times")
+						|| operations.get(0).equals("over")) {
+					if (operations.get(0).equals("times"))
+						tempValue = translatedOperands[0]
+								* translatedOperands[1];
+					if (operations.get(0).equals("over"))
+						tempValue = translatedOperands[0]
+								/ translatedOperands[1];
+					switch (operations.get(1)) {
+					case "plus":
+						result = tempValue + translatedOperands[2];
+						break;
+					case "minus":
+						result = tempValue - translatedOperands[2];
+						break;
+					case "times":
+						result = tempValue * translatedOperands[2];
+						break;
+					case "over":
+						result = tempValue / translatedOperands[2];
+						break;
+					}
+				} else {
 
-				if (operations.get(1).equals("times"))
-					tempValue = translatedOperands[1] * translatedOperands[2];
-				else if (operations.get(1).equals("over"))
-					tempValue = translatedOperands[1] / translatedOperands[2];
-				else if (operations.get(1).equals("plus"))
-					tempValue = translatedOperands[1] + translatedOperands[2];
-				else if (operations.get(1).equals("minus"))
-					tempValue = translatedOperands[1] - translatedOperands[2];
-				switch (operations.get(0)) {
-				case "plus":
-					result = tempValue + translatedOperands[0];
-					break;
-				case "minus":
-					result = tempValue - translatedOperands[0];
-					break;
-				case "times":
-					result = tempValue * translatedOperands[0];
-					break;
-				case "over":
-					result = tempValue / translatedOperands[0];
-					break;
+					if (operations.get(1).equals("times"))
+						tempValue = translatedOperands[1]
+								* translatedOperands[2];
+					else if (operations.get(1).equals("over"))
+						tempValue = translatedOperands[1]
+								/ translatedOperands[2];
+					else if (operations.get(1).equals("plus"))
+						tempValue = translatedOperands[1]
+								+ translatedOperands[2];
+					else if (operations.get(1).equals("minus"))
+						tempValue = translatedOperands[1]
+								- translatedOperands[2];
+					switch (operations.get(0)) {
+					case "plus":
+						result = tempValue + translatedOperands[0];
+						break;
+					case "minus":
+						result = tempValue - translatedOperands[0];
+						break;
+					case "times":
+						result = tempValue * translatedOperands[0];
+						break;
+					case "over":
+						result = tempValue / translatedOperands[0];
+						break;
+					}
 				}
 			}
-		}
-		}
-		catch(Exception e){
+		} catch (Exception e) {
 			errorOccured = true;
 		}
 
@@ -374,29 +400,28 @@ public class Calculator {
 					operand1 += sentenceWords[i] + " ";
 			}
 			for (int i = baseWordIndex + 1; i < sentenceWords.length; i++) {
-				if (i == sentenceWords.length-1)
+				if (i == sentenceWords.length - 1)
 					operand2 += sentenceWords[i];
 				else
 					operand2 += sentenceWords[i] + " ";
 			}
-			result = log(translateNumber(operand1.split(" ")), translateNumber(operand2.split(" ")));
-		}
-		else{
+			result = log(translateNumber(operand1.split(" ")),
+					translateNumber(operand2.split(" ")));
+		} else {
 			String operand = "";
 			for (int i = 1; i < sentenceWords.length; i++) {
-				if (i == sentenceWords.length-1)
+				if (i == sentenceWords.length - 1)
 					operand += sentenceWords[i];
 				else
 					operand += sentenceWords[i] + " ";
 			}
-			result =  log(translateNumber(operand.split(" ")), 10.0);
+			result = log(translateNumber(operand.split(" ")), 10.0);
 		}
 
 	}
-	
-	static double log(double x, double base)
-	{
-	    return Math.log(x) / Math.log(base);
+
+	static double log(double x, double base) {
+		return Math.log(x) / Math.log(base);
 	}
 
 	private void storeInVariable(String operationSentence) {

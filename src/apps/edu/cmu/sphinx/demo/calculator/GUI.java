@@ -55,12 +55,15 @@ public class GUI {
 		});
 	}
 
-	public class TestPane extends JPanel implements ActionListener{
+	public class TestPane extends JPanel implements ActionListener {
 		Calculator calculator;
 		private JButton evaluate;
 		private JTextArea inputText;
 		private JLabel result;
 		private JLabel error;
+		private JButton ask;
+		private JLabel input;
+
 		public TestPane() {
 			calculator = new Calculator();
 
@@ -93,11 +96,11 @@ public class GUI {
 
 			// speechPanel content
 			speechPanel.setLayout(new BorderLayout());
-			JButton ask = new JButton("Ask!");
+			ask = new JButton("Ask!");
 			JPanel temp = new JPanel();
 			temp.setBackground(Color.WHITE);
 			temp.add(ask);
-			JLabel input = new JLabel("You said:dkdkjdkjdjkdjkdjkdjk");
+			input = new JLabel("You said:dkdkjdkjdjkdjkdjkdjk");
 			JPanel temp2 = new JPanel();
 			temp2.setBackground(Color.WHITE);
 			temp2.add(input);
@@ -123,16 +126,17 @@ public class GUI {
 			JPanel temp5 = new JPanel();
 			temp5.setBackground(Color.WHITE);
 			temp5.add(evaluate);
-			inputText = new JTextArea(2,20);
+			inputText = new JTextArea(2, 20);
 			inputText.setFont(new Font("Verdana", 1, 11));
 			inputText.setBackground(Color.LIGHT_GRAY);
 			JPanel temp6 = new JPanel();
-			temp6.setMinimumSize(new Dimension(200,50));
+			temp6.setMinimumSize(new Dimension(200, 50));
 			temp6.setBackground(Color.WHITE);
 			temp6.add(inputText);
 			textPanel.add(temp5, BorderLayout.NORTH);
 			textPanel.add(inputText, BorderLayout.SOUTH);
 			//
+			ask.addActionListener(this);
 			evaluate.addActionListener(this);
 			// seperators
 			JPanel seperator1 = new JPanel();
@@ -162,19 +166,25 @@ public class GUI {
 			error.setText("No Error");
 			error.setForeground(Color.BLACK);
 			String text = "";
-			if(arg0.getSource() == evaluate){
+			if (arg0.getSource() == ask) {
+				System.out.println("entered herre");
+				calculator.listen();
+				System.out.println("finished");
+				if (!calculator.errorOccured)
+					input.setText("You said: " + calculator.saidSentence);
+			}
+			if (arg0.getSource() == evaluate) {
 				text = inputText.getText();
-				if(!text.equals("")){
+				if (!text.equals("")) {
 					calculator.parse(text);
 				}
-				if(calculator.errorOccured){
+				if (calculator.errorOccured) {
 					error.setText("Error Occurred");
 					error.setForeground(Color.RED);
 					result.setText("Result = ");
 					calculator.errorOccured = false;
-				}
-				else{
-				result.setText("Result = " + calculator.result);
+				} else {
+					result.setText("Result = " + calculator.result);
 				}
 			}
 		}
