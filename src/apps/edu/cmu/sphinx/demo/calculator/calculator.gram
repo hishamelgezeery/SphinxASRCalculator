@@ -14,7 +14,7 @@ grammar calculator;
            eighteen | nineteen);
 
 // 10 - 20 - 30 --> 90
-<ten> = (ten | twenty | thirty | forty | fifty | sixty | seventy | eighty | ninety); #
+<ten> = (ten | twenty | thirty | forty | fifty | sixty | seventy | eighty | ninety);
 
 // ten + unit eg. twenty three
 <tenUnit> = <ten> <unit>;
@@ -22,8 +22,11 @@ grammar calculator;
 // a number from 0 --> 99
 <smallNum> = <unit> | <unitTens> | <ten> | <tenUnit>;
 
+// a number for creating a number in the thousands from 2 2-digit numbers
+<twoDigit> = <unitTens> | <ten>;
+
 // numbers involving "hundred", could be three hundred or thirty four hundred = 3400
-<hundred> = <smallNum> hundred;
+<hundred> = <unit> hundred;
 
 // all combinations producing a number in the thousands - range now up to 99,999
 <thousand> = <smallNum> thousand;
@@ -52,7 +55,7 @@ public <storeLastResult> = store last result;
 
 public <getLastResult> = get last result;
 
-<operand> = (<number> | <variable>) [power <number>];
+<operand> = (<number> | <variable>) ([power <number>] | [squared] | [cubed]);
 
 <operator> = (plus | minus | over | times| power);
 
