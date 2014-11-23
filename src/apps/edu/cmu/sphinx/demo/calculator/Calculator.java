@@ -32,8 +32,9 @@ public class Calculator {
 	private HashMap<String, Double> translations;
 	private HashMap<String, Double> variables;
 	private String status;
-	private double lastResult;
-	private double result;
+	public boolean errorOccured = false;
+	public double lastResult;
+	public double result;
 
 	public Calculator() {
 		// setting up Speech Recognition
@@ -91,6 +92,7 @@ public class Calculator {
 	}
 
 	public void parse(String operationSentence) {
+		try{
 		String[] sentenceWords = operationSentence.split(" ");
 
 		// case of defining variable
@@ -197,6 +199,10 @@ public class Calculator {
 					break;
 				}
 			}
+		}
+		}
+		catch(Exception e){
+			errorOccured = true;
 		}
 
 	}
