@@ -119,6 +119,7 @@ public class Calculator {
 		// execute log operation
 		if (sentenceWords[0].equalsIgnoreCase("log")) {
 			performLogOperation(sentenceWords);
+			return;
 		}
 		// otherwise split the operation into operands and operators
 		// and solve
@@ -132,15 +133,80 @@ public class Calculator {
 					|| sentenceWords[i].equals("times"))
 				operations.add(sentenceWords[i]);
 		}
-		translateOperands(operandsArray);
+		double[] translatedOperands = translateOperands(operandsArray);
+		if (translatedOperands.length == 2) {
+			switch (operations.get(0)) {
+			case "plus":
+				result = translatedOperands[0] + translatedOperands[1];
+				break;
+			case "minus":
+				result = translatedOperands[0] - translatedOperands[1];
+				break;
+			case "times":
+				result = translatedOperands[0] * translatedOperands[1];
+				break;
+			case "over":
+				result = translatedOperands[0] / translatedOperands[1];
+				break;
+			}
+		} else {
+			// if 3 operands check if there is times or over and e
+			double tempValue = -1.0;
+			if (operations.get(0).equals("times")
+					|| operations.get(0).equals("over")) {
+				if (operations.get(0).equals("times"))
+					tempValue = translatedOperands[0] * translatedOperands[1];
+				if (operations.get(0).equals("over"))
+					tempValue = translatedOperands[0] / translatedOperands[1];
+				switch (operations.get(1)) {
+				case "plus":
+					result = tempValue + translatedOperands[2];
+					break;
+				case "minus":
+					result = tempValue - translatedOperands[2];
+					break;
+				case "times":
+					result = tempValue * translatedOperands[2];
+					break;
+				case "over":
+					result = tempValue / translatedOperands[2];
+					break;
+				}
+			} else {
+
+				if (operations.get(1).equals("times"))
+					tempValue = translatedOperands[1] * translatedOperands[2];
+				else if (operations.get(1).equals("over"))
+					tempValue = translatedOperands[1] / translatedOperands[2];
+				else if (operations.get(1).equals("plus"))
+					tempValue = translatedOperands[1] + translatedOperands[2];
+				else if (operations.get(1).equals("minus"))
+					tempValue = translatedOperands[1] - translatedOperands[2];
+				switch (operations.get(0)) {
+				case "plus":
+					result = tempValue + translatedOperands[0];
+					break;
+				case "minus":
+					result = tempValue - translatedOperands[0];
+					break;
+				case "times":
+					result = tempValue * translatedOperands[0];
+					break;
+				case "over":
+					result = tempValue / translatedOperands[0];
+					break;
+				}
+			}
+		}
 
 	}
 
-	private void translateOperands(String[] operandsArray) {
+	private double[] translateOperands(String[] operandsArray) {
 		double[] translatedOperands = new double[operandsArray.length];
 		for (int i = 0; i < operandsArray.length; i++) {
 			translatedOperands[i] = translateOperandsHelper(operandsArray[i]);
 		}
+		return translatedOperands;
 
 	}
 
@@ -148,34 +214,35 @@ public class Calculator {
 		double firstElement = 0;
 		double secondElement = 0;
 		String[] stringElements;
-		//if operand contains power
+		// if operand contains power
 		if (string.contains("power")) {
 			stringElements = string.split("power");
-			if(stringElements[0].length()>2)
-			firstElement = translateNumber(stringElements[0].split(" "));
+			if (stringElements[0].length() > 2)
+				firstElement = translateNumber(stringElements[0].split(" "));
 			else
-			firstElement = variables.get(stringElements[0]);
+				firstElement = variables.get(stringElements[0]);
 			System.out.println("stringElements[0] = " + stringElements[0]);
 			System.out.println("stringElements[1] = " + stringElements[1]);
 			secondElement = translateNumber(stringElements[1].trim().split(" "));
 			return Math.pow(firstElement, secondElement);
 		}
-		
-		if(string.contains("squared")){
+
+		if (string.contains("squared")) {
 			string = string.replace("squared", "");
-			if(variables.containsKey(string.trim()))
-				return Math.pow(variables.get(string.trim()),2);
-			else return Math.pow(translateNumber(string.split(" ")),2);
+			if (variables.containsKey(string.trim()))
+				return Math.pow(variables.get(string.trim()), 2);
+			else
+				return Math.pow(translateNumber(string.split(" ")), 2);
 		}
-		if(string.contains("cubed")){
+		if (string.contains("cubed")) {
 			string = string.replace("cubed", "");
-			if(variables.containsKey(string.trim()))
-				return Math.pow(variables.get(string.trim()),3);
-			else return Math.pow(translateNumber(string.split(" ")),3);
+			if (variables.containsKey(string.trim()))
+				return Math.pow(variables.get(string.trim()), 3);
+			else
+				return Math.pow(translateNumber(string.split(" ")), 3);
 		}
-		
-		
-		return translateNumber(string.split(" "));
+
+		return translateNumber(string.trim().split(" "));
 	}
 
 	public boolean isDoubleParsable(String string) {
@@ -189,56 +256,68 @@ public class Calculator {
 
 	private double translateNumber(String[] numberElements) {
 		ArrayList<String> translatedValues = new ArrayList<String>();
-		//putting available translations instead of words from translations Hashmap
+		// putting available translations instead of words from translations and
+		// variables
+		// Hashmaps
 		for (int i = 0; i < numberElements.length; i++) {
 			if (translations.containsKey(numberElements[i])) {
 				double value = translations.get(numberElements[i]);
-				translatedValues.add(""+value);
-			}
-			else{
+				translatedValues.add("" + value);
+			} else if (variables.containsKey(numberElements[i])) {
+				double value = variables.get(numberElements[i]);
+				translatedValues.add("" + value);
+			} else {
 				translatedValues.add(numberElements[i]);
 			}
 		}
 		translatedValues.remove("and");
-		//grouping two digit numbers
+		// grouping two digit numbers
 		for (int i = 0; i < translatedValues.size() - 1; i++) {
 			if (isDoubleParsable(translatedValues.get(i))
 					&& Double.parseDouble(translatedValues.get(i)) >= 20
-					&& isDoubleParsable(translatedValues.get(i+1))
-					&& Double.parseDouble(translatedValues.get(i+1)) < 10) {
-				translatedValues.set(i,""+ (Double.parseDouble(translatedValues.get(i))
-						+ Double.parseDouble(translatedValues.get(i+1))) );
-				translatedValues.remove(i+1);
+					&& isDoubleParsable(translatedValues.get(i + 1))
+					&& Double.parseDouble(translatedValues.get(i + 1)) < 10) {
+				translatedValues
+						.set(i,
+								""
+										+ (Double.parseDouble(translatedValues
+												.get(i)) + Double
+												.parseDouble(translatedValues
+														.get(i + 1))));
+				translatedValues.remove(i + 1);
 			}
 		}
-		//replacing thousand and hundred by 000 and 00 respectively
+		// replacing thousand and hundred by 000 and 00 respectively
 		for (int i = 0; i < translatedValues.size(); i++) {
-			if(translatedValues.get(i).equalsIgnoreCase("thousand")){
+			if (translatedValues.get(i).equalsIgnoreCase("thousand")) {
 				translatedValues.set(i, "000");
-			}
-			else if(translatedValues.get(i).equalsIgnoreCase("hundred"))
+			} else if (translatedValues.get(i).equalsIgnoreCase("hundred"))
 				translatedValues.set(i, "00");
 		}
-		//grouping thousands and hundreds together to be ready to add all elements
-		//in Arraylist
-		if(translatedValues.contains("000")){
+		// grouping thousands and hundreds together to be ready to add all
+		// elements
+		// in Arraylist
+		if (translatedValues.contains("000")) {
 			int indexOfThousand = translatedValues.indexOf("000");
-			double temp = Double.parseDouble(translatedValues.get(indexOfThousand-1)) * 1000;
+			double temp = Double.parseDouble(translatedValues
+					.get(indexOfThousand - 1)) * 1000;
 			translatedValues.set(indexOfThousand, "" + temp);
-			translatedValues.remove(indexOfThousand-1);
-			
+			translatedValues.remove(indexOfThousand - 1);
+
 		}
-		if(translatedValues.contains("00")){
+		if (translatedValues.contains("00")) {
 			int indexOfHundred = translatedValues.indexOf("00");
-			double temp = Double.parseDouble(translatedValues.get(indexOfHundred-1)) * 100;
+			double temp = Double.parseDouble(translatedValues
+					.get(indexOfHundred - 1)) * 100;
 			translatedValues.set(indexOfHundred, "" + temp);
-			translatedValues.remove(indexOfHundred-1);
-			
+			translatedValues.remove(indexOfHundred - 1);
+
 		}
 		System.out.println(translatedValues);
 		boolean allDigits = true;
+		translatedValues.remove("");
 		for (int i = 0; i < translatedValues.size(); i++) {
-			if(Double.parseDouble(translatedValues.get(i))>9){
+			if (Double.parseDouble(translatedValues.get(i)) > 9) {
 				allDigits = false;
 				break;
 			}
@@ -247,31 +326,71 @@ public class Calculator {
 		double temp;
 		for (int i = 0; i < translatedValues.size(); i++) {
 			temp = Double.parseDouble(translatedValues.get(i));
-			if(temp<9 || temp>100){
+			if (temp < 9 || temp > 100) {
 				allTwoDigitNumbers = false;
 				break;
 			}
 		}
 		double value = 0;
-		if(allDigits | allTwoDigitNumbers){
+		if (allDigits | allTwoDigitNumbers) {
 			String number = "";
 			for (int i = 0; i < translatedValues.size(); i++) {
-				number+= ((int)(Double.parseDouble(translatedValues.get(i))));
+				number += ((int) (Double.parseDouble(translatedValues.get(i))));
 			}
 			value = Double.parseDouble(number);
-		}
-		else{
+		} else {
 			for (int i = 0; i < translatedValues.size(); i++) {
-				value+= Double.parseDouble(translatedValues.get(i));
+				value += Double.parseDouble(translatedValues.get(i));
 			}
 		}
-		
+
 		return value;
 	}
 
 	private void performLogOperation(String[] sentenceWords) {
-		// TODO Auto-generated method stub
+		ArrayList<Double> operands = new ArrayList<Double>();
+		boolean basePresent = false;
+		int baseWordIndex = 0;
+		for (int i = 0; i < sentenceWords.length; i++) {
+			if (sentenceWords[i].equalsIgnoreCase("base")) {
+				basePresent = true;
+				baseWordIndex = i;
+				break;
+			}
+		}
+		if (basePresent) {
+			String operand1 = "";
+			String operand2 = "";
+			for (int i = 1; i < baseWordIndex; i++) {
+				if (i == baseWordIndex - 1)
+					operand1 += sentenceWords[i];
+				else
+					operand1 += sentenceWords[i] + " ";
+			}
+			for (int i = baseWordIndex + 1; i < sentenceWords.length; i++) {
+				if (i == sentenceWords.length-1)
+					operand2 += sentenceWords[i];
+				else
+					operand2 += sentenceWords[i] + " ";
+			}
+			result = log(translateNumber(operand1.split(" ")), translateNumber(operand2.split(" ")));
+		}
+		else{
+			String operand = "";
+			for (int i = 1; i < sentenceWords.length; i++) {
+				if (i == sentenceWords.length-1)
+					operand += sentenceWords[i];
+				else
+					operand += sentenceWords[i] + " ";
+			}
+			result =  log(translateNumber(operand.split(" ")), 10.0);
+		}
 
+	}
+	
+	static double log(double x, double base)
+	{
+	    return Math.log(x) / Math.log(base);
 	}
 
 	private void storeInVariable(String operationSentence) {
@@ -285,26 +404,18 @@ public class Calculator {
 
 	}
 
-	public static int wordCount(String s) {
-		if (s == null)
-			return 0;
-		return s.trim().split("\\s+").length;
-	}
-
 	public static void main(String[] args) {
-		/* test block
-		 *Calculator c = new Calculator();
-		String[] temp = {"four","two","six", "three"};
-		String[] temp2 = {"eleven", "twenty", "three"};
-		String[] temp3 = {"eleven", "hundred"};
-		String[] temp4 = {"sixteen", "hundred","and", "sixty", "nine"};
-		String[] temp5 = {"ninety", "nine", "thousand", "sixteen", "hundred","and", "sixty", "nine"};
-		System.out.println(c.translateNumber(temp));
-		System.out.println(c.translateNumber(temp2));
-		System.out.println(c.translateNumber(temp3));
-		System.out.println(c.translateNumber(temp4));
-		System.out.println(c.translateNumber(temp5));*/
-		Calculator c = new Calculator();
-		System.out.println(c.translateOperandsHelper("fifty five squared"));
+		/*
+		 * test blockCalculator c = new Calculator(); String[] temp =
+		 * {"four","two","six", "three"}; String[] temp2 = {"eleven", "twenty",
+		 * "three"}; String[] temp3 = {"eleven", "hundred"}; String[] temp4 =
+		 * {"sixteen", "hundred","and", "sixty", "nine"}; String[] temp5 =
+		 * {"ninety", "nine", "thousand", "sixteen", "hundred","and", "sixty",
+		 * "nine"}; System.out.println(c.translateNumber(temp));
+		 * System.out.println(c.translateNumber(temp2));
+		 * System.out.println(c.translateNumber(temp3));
+		 * System.out.println(c.translateNumber(temp4));
+		 * System.out.println(c.translateNumber(temp5));
+		 */
 	}
 }
