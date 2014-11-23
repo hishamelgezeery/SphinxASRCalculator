@@ -145,17 +145,42 @@ public class Calculator {
 	}
 
 	private double translateOperandsHelper(String string) {
-		String[] stringElements = string.split(" ");
+		double firstElement = 0;
+		double secondElement = 0;
+		String[] stringElements;
+		//if operand contains power
 		if (string.contains("power")) {
-
+			stringElements = string.split("power");
+			if(stringElements[0].length()>2)
+			firstElement = translateNumber(stringElements[0].split(" "));
+			else
+			firstElement = variables.get(stringElements[0]);
+			System.out.println("stringElements[0] = " + stringElements[0]);
+			System.out.println("stringElements[1] = " + stringElements[1]);
+			secondElement = translateNumber(stringElements[1].trim().split(" "));
+			return Math.pow(firstElement, secondElement);
 		}
-		return 0;
+		
+		if(string.contains("squared")){
+			string = string.replace("squared", "");
+			if(variables.containsKey(string.trim()))
+				return Math.pow(variables.get(string.trim()),2);
+			else return Math.pow(translateNumber(string.split(" ")),2);
+		}
+		if(string.contains("cubed")){
+			string = string.replace("cubed", "");
+			if(variables.containsKey(string.trim()))
+				return Math.pow(variables.get(string.trim()),3);
+			else return Math.pow(translateNumber(string.split(" ")),3);
+		}
+		
+		
+		return translateNumber(string.split(" "));
 	}
 
 	public boolean isDoubleParsable(String string) {
-		double x = -1;
 		try {
-			x = Double.parseDouble(string);
+			Double.parseDouble(string);
 		} catch (Exception e) {
 			return false;
 		}
@@ -244,15 +269,6 @@ public class Calculator {
 		return value;
 	}
 
-	private static void printArray(String[] numberElements) {
-		System.out.print("[");
-		for (int i = 0; i < numberElements.length; i++) {
-			System.out.print(numberElements[i] + ", ");
-		}
-		System.out.println("]");
-
-	}
-
 	private void performLogOperation(String[] sentenceWords) {
 		// TODO Auto-generated method stub
 
@@ -288,5 +304,7 @@ public class Calculator {
 		System.out.println(c.translateNumber(temp3));
 		System.out.println(c.translateNumber(temp4));
 		System.out.println(c.translateNumber(temp5));*/
+		Calculator c = new Calculator();
+		System.out.println(c.translateOperandsHelper("fifty five squared"));
 	}
 }
