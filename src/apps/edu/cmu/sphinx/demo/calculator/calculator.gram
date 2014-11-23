@@ -63,7 +63,7 @@ public <getLastResult> = get last result;
 
 public <operation>  = <operand> <operator> <operand> [<operator> <operand>];
 
-public <logOperation>  = log <operand> [<operator> <operand>];		   
+public <logOperation>  = log <operand> base <operand>;		   
 		   
 		   
 		   
