@@ -100,7 +100,7 @@ public class GUI {
 			JPanel temp = new JPanel();
 			temp.setBackground(Color.WHITE);
 			temp.add(ask);
-			input = new JLabel("You said:dkdkjdkjdjkdjkdjkdjk");
+			input = new JLabel("You said: x power two");
 			JPanel temp2 = new JPanel();
 			temp2.setBackground(Color.WHITE);
 			temp2.add(input);
@@ -169,9 +169,11 @@ public class GUI {
 			if (arg0.getSource() == ask) {
 				System.out.println("entered herre");
 				calculator.listen();
-				System.out.println("finished");
 				if (!calculator.errorOccured)
 					input.setText("You said: " + calculator.saidSentence);
+				else{
+					input.setText("You said: ");
+				}
 			}
 			if (arg0.getSource() == evaluate) {
 				text = inputText.getText();

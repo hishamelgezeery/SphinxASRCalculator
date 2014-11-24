@@ -47,9 +47,6 @@ public class Calculator {
 		recognizer.allocate();
 		// start the microphone or exit if the programm if this is not possible
 		microphone = (Microphone) cm.lookup("microphone");
-		if (!microphone.startRecording()) {
-			recognizer.deallocate();
-		}
 
 		// Initializing variables
 		initializeTranslations();
@@ -157,6 +154,10 @@ public class Calculator {
 					operations.add(sentenceWords[i]);
 			}
 			double[] translatedOperands = translateOperands(operandsArray);
+			if(translatedOperands.length == 1){
+				result = translatedOperands[0];
+				return;
+			}
 			if (translatedOperands.length == 2) {
 				switch (operations.get(0)) {
 				case "plus":
@@ -248,9 +249,12 @@ public class Calculator {
 		String[] stringElements;
 		// if operand contains power
 		if (string.contains("power")) {
-			stringElements = string.split("power");
+			System.out.println("entered here");
+			string = string.replace("power", ";");
+			System.out.println("String = " + string);
+			stringElements = string.split(";");
 			if (stringElements[0].length() > 2)
-				firstElement = translateNumber(stringElements[0].split(" "));
+				firstElement = translateNumber(stringElements[0].trim().split(" "));
 			else
 				firstElement = variables.get(stringElements[0]);
 			System.out.println("stringElements[0] = " + stringElements[0]);
@@ -405,8 +409,10 @@ public class Calculator {
 				else
 					operand2 += sentenceWords[i] + " ";
 			}
-			result = log(translateNumber(operand1.split(" ")),
-					translateNumber(operand2.split(" ")));
+			System.out.println("operand1 = " + operand1 );
+			System.out.println("operand2 = " + operand2 );
+			double [] temp_values = translateOperands(new String[]{operand1,operand2});
+			result = log(temp_values[1], temp_values[2]);
 		} else {
 			String operand = "";
 			for (int i = 1; i < sentenceWords.length; i++) {
@@ -436,17 +442,12 @@ public class Calculator {
 	}
 
 	public static void main(String[] args) {
-		/*
-		 * test blockCalculator c = new Calculator(); String[] temp =
-		 * {"four","two","six", "three"}; String[] temp2 = {"eleven", "twenty",
-		 * "three"}; String[] temp3 = {"eleven", "hundred"}; String[] temp4 =
-		 * {"sixteen", "hundred","and", "sixty", "nine"}; String[] temp5 =
-		 * {"ninety", "nine", "thousand", "sixteen", "hundred","and", "sixty",
-		 * "nine"}; System.out.println(c.translateNumber(temp));
-		 * System.out.println(c.translateNumber(temp2));
-		 * System.out.println(c.translateNumber(temp3));
-		 * System.out.println(c.translateNumber(temp4));
-		 * System.out.println(c.translateNumber(temp5));
-		 */
+		
+		 Calculator c = new Calculator(); 
+		 String temp ="define y"; 
+		 c.parse(temp);
+		  System.out.println(c.result);
+		 
+		 
 	}
 }
